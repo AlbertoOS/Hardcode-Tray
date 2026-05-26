@@ -18,6 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Hardcode-Tray. If not, see <http://www.gnu.org/licenses/>.
 """
+
 from functools import reduce
 from gettext import gettext as _
 from os import makedirs, listdir, path, remove, symlink
@@ -39,13 +40,14 @@ def progress(count, count_max, time, app_name=""):
     filled_len = int(round(bar_len * count / float(count_max)))
 
     percents = round(100.0 * count / float(count_max), 1)
-    progress_bar = '#' * filled_len + '.' * (bar_len - filled_len)
+    progress_bar = "#" * filled_len + "." * (bar_len - filled_len)
 
-    stdout.write("\r{0!s}{1!s}".format(app_name,
-                                       " " * (abs(len(app_name) - space))))
-    stdout.write('[{0}] {1}/{2} {3}% {4:.2f}s\r'.format(progress_bar,
-                                                        count, count_max,
-                                                        percents, time))
+    stdout.write("\r{0!s}{1!s}".format(app_name, " " * (abs(len(app_name) - space))))
+    stdout.write(
+        "[{0}] {1}/{2} {3}% {4:.2f}s\r".format(
+            progress_bar, count, count_max, percents, time
+        )
+    )
     print("")
     stdout.flush()
 
@@ -97,16 +99,14 @@ def get_kde_scaling_factor():
     was_found = False
 
     try:
-        with open(KDE_CONFIG_FILE, 'r') as kde_obj:
+        with open(KDE_CONFIG_FILE, "r") as kde_obj:
             data = kde_obj.readlines()
 
         for line in data:
-            line = list(map(lambda x: x.strip(),
-                            line.split("=")))
+            line = list(map(lambda x: x.strip(), line.split("=")))
 
             if len(line) == 1:
-                was_found = match(
-                    r'\[Containments\]\[[0-9]+\]\[General\]', line[0])
+                was_found = match(r"\[Containments\]\[[0-9]+\]\[General\]", line[0])
 
             if len(line) > 1 and was_found and line[0].lower() == "iconsize":
                 scaling_factor = int(line[1])
@@ -126,7 +126,7 @@ def get_gnome_scaling_factor():
     source = Gio.SettingsSchemaSource.get_default()
     if source.lookup("org.gnome.desktop.interface", True):
         gsettings = Gio.Settings.new("org.gnome.desktop.interface")
-        scaling_factor = gsettings.get_uint('scaling-factor') + 1
+        scaling_factor = gsettings.get_uint("scaling-factor") + 1
         Logger.debug("Scaling Factor/GNOME: {}".format(scaling_factor))
         return scaling_factor
     else:
@@ -139,7 +139,7 @@ def get_cinnamon_scaling_factor():
     source = Gio.SettingsSchemaSource.get_default()
     if source.lookup("org.cinnamon.desktop.interface", True):
         gsettings = Gio.Settings.new("org.cinnamon.desktop.interface")
-        scaling_factor = gsettings.get_uint('scaling-factor')
+        scaling_factor = gsettings.get_uint("scaling-factor")
         if scaling_factor == 0:
             # Cinnamon does have an auto scaling feature which we can't use
             scaling_factor = 1
@@ -172,8 +172,9 @@ def execute(command_list, verbose=True, shell=False, working_directory=None):
     """
     Logger.debug("Executing command: {0}".format(" ".join(command_list)))
     if working_directory:
-        cmd = Popen(command_list, stdout=PIPE, stderr=PIPE, shell=shell,
-                    cwd=working_directory)
+        cmd = Popen(
+            command_list, stdout=PIPE, stderr=PIPE, shell=shell, cwd=working_directory
+        )
     else:
         cmd = Popen(command_list, stdout=PIPE, stderr=PIPE, shell=shell)
 
@@ -185,7 +186,7 @@ def execute(command_list, verbose=True, shell=False, working_directory=None):
 
 def is_installed(binary):
     """Check if a binary file exists/installed."""
-    ink_flag = call(['which', binary], stdout=PIPE, stderr=PIPE)
+    ink_flag = call(["which", binary], stdout=PIPE, stderr=PIPE)
     return bool(ink_flag == 0)
 
 
@@ -207,17 +208,17 @@ def get_iterated_icons(icons):
 def get_pngbytes(icon):
     """Return the pngbytes of a svg/png icon."""
     from HardcodeTray.app import App
+
     icon_for_replace = icon.theme
     icon_extension = icon.theme_ext
     icon_size = icon.icon_size
-    if icon_extension == 'svg':
+    if icon_extension == "svg":
         if icon_size != App.icon_size():
-            png_bytes = App.svg().to_bin(icon_for_replace,
-                                         App.icon_size())
+            png_bytes = App.svg().to_bin(icon_for_replace, App.icon_size())
         else:
             png_bytes = App.svg().to_bin(icon_for_replace)
     elif icon_extension == "png":
-        with open(icon_for_replace, 'rb') as png_file:
+        with open(icon_for_replace, "rb") as png_file:
             png_bytes = png_file.read()
     else:
         png_bytes = None
@@ -242,11 +243,8 @@ def change_dict_vals(d, sizediff, offset):
     """Iterative funtion to account for the new size of the png bytearray."""
     if isinstance(d, dict):
         d2 = {k: change_dict_vals(v, sizediff, offset) for k, v in d.items()}
-        ofval = d2.get('offset')
-        if ofval and isinstance(ofval, str):
-            ofval = int(ofval)
-            if ofval > offset:
-                d2['offset'] = str(ofval + sizediff)
+        if d2.get("offset") and int(d2.get("offset")) > offset:
+            d2["offset"] = str(int(d2["offset"]) + sizediff)
         return d2
     return d
 
@@ -265,7 +263,7 @@ def replace_colors(file_name, colors):
     """Replace the colors in a file name."""
     if path.isfile(file_name):
         # Open SVG file
-        with open(file_name, 'r') as file_:
+        with open(file_name, "r") as file_:
             file_data = file_.read()
 
         # Replace colors
@@ -275,14 +273,14 @@ def replace_colors(file_name, colors):
             file_data = sub(to_replace, for_replace, file_data)
 
         # Save new file content on a tmp file.
-        with open(file_name, 'w') as _file:
+        with open(file_name, "w") as _file:
             _file.write(file_data)
         _file.close()
 
 
 def get_exact_folder(key, directory, condition):
     """
-        Get subdirs and apply a condition on each until one is found.
+    Get subdirs and apply a condition on each until one is found.
     """
     dirs = directory.split(key)
     exact_directory = ""
@@ -303,4 +301,5 @@ def get_exact_folder(key, directory, condition):
 def set_user_permissions(target):
     """Set permissions to user instead of root."""
     from HardcodeTray.const import USERNAME
+
     execute(["chown", "-R", "%s:%s" % (USERNAME, USERNAME), target])
