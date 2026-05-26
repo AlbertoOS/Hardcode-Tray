@@ -18,6 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Hardcode-Tray. If not, see <http://www.gnu.org/licenses/>.
 """
+
 from os import path
 
 from HardcodeTray.utils import replace_to_6hex
@@ -59,8 +60,7 @@ class ArgumentsConfig:
     def conversion_tool(self):
         """Return conversion tool set by --conversion-tool."""
         conversion_tool = self._args.conversion_tool
-        Logger.debug("Arguments/Conversion Tool: "
-                     "{}".format(conversion_tool))
+        Logger.debug("Arguments/Conversion Tool: {}".format(conversion_tool))
         return conversion_tool
 
     def colors(self):
@@ -98,6 +98,7 @@ class ArgumentsConfig:
     def action(self):
         """Return which action to be done."""
         from HardcodeTray.enum import Action
+
         action = None
         is_apply = self._args.apply
         is_revert = self._args.revert
@@ -115,3 +116,7 @@ class ArgumentsConfig:
         elif is_clear_cache:
             action = Action.CLEAR_CACHE
         return action
+
+    def user(self):
+        """Return whether to run in user-only mode (no root required)."""
+        return self._args.user if hasattr(self._args, "user") else False

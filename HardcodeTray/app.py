@@ -18,11 +18,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Hardcode-Tray. If not, see <http://www.gnu.org/licenses/>.
 """
+
 from gettext import gettext as _
 from glob import glob
-from os import path
+from os import geteuid, path
 
-from HardcodeTray.const import DB_FOLDER, BACKUP_FOLDER
+from HardcodeTray.const import DB_FOLDER, BACKUP_FOLDER, USERHOME
 from HardcodeTray.enum import Action
 from HardcodeTray.utils import progress, set_user_permissions
 
@@ -38,8 +39,9 @@ from HardcodeTray.modules.svg.svg import SVG
 
 class App:
     """
-        Main application.
+    Main application.
     """
+
     _args = None  # Arguments Parser
     _json = None  # Config file (json)
     _system = None  # System config
@@ -97,10 +99,20 @@ class App:
         blacklist = App.get("blacklist")
         if not blacklist:
             blacklist = []
+        user_only = App.get("user")
         for db_file in files:
             db_filename = path.splitext(path.basename(db_file))[0]
             if db_filename not in blacklist:
                 application_data = Parser(db_file)
+                if user_only:
+                    # Skip apps whose icon paths are outside the user's home
+                    application_data.icons_path = [
+                        p
+                        for p in application_data.icons_path
+                        if str(p).startswith(USERHOME)
+                    ]
+                    if not application_data.icons_path:
+                        continue
                 if application_data.is_installed():
                     supported_apps.append(application_data.get_application())
 
@@ -130,7 +142,8 @@ class App:
 
         if apps:
             print(_("Took {:.2f}s to finish the tasks").format(total_time))
-            set_user_permissions(BACKUP_FOLDER)
+            if geteuid() == 0:
+                set_user_permissions(BACKUP_FOLDER)
         elif action == Action.APPLY:
             print(_("No apps to fix!"))
         elif action == Action.CLEAR_CACHE:
@@ -141,7 +154,7 @@ class App:
     @staticmethod
     def svg():
         """
-            Return an instance of a conversion tool
+        Return an instance of a conversion tool
         """
         if App._svgtopng is None:
             conversion_tool = App.get("conversion_tool")
@@ -151,7 +164,7 @@ class App:
     @staticmethod
     def icon_size():
         """
-            Return the icon size.
+        Return the icon size.
         """
         if not App._icon_size:
             icon_size = App.get("icon_size")
@@ -161,7 +174,7 @@ class App:
     @staticmethod
     def scaling_factor():
         """
-            Returns the scaling factor.
+        Returns the scaling factor.
         """
         if not App._scaling_factor:
             scaling_factor = App.get("scaling_factor")
@@ -183,7 +196,7 @@ class App:
     @staticmethod
     def path():
         """
-            The icons path, specified per application.
+        The icons path, specified per application.
         """
         path_ = App.get("path")
         if len(App.get("only")) > 1 and path_:

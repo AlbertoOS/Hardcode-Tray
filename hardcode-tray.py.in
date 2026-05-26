@@ -41,10 +41,6 @@ from HardcodeTray.app import App
 from HardcodeTray.const import DESKTOP_ENV, ICONS_SIZE, THEMES_LIST
 from HardcodeTray.enum import Action, ConversionTools
 
-if geteuid() != 0:
-    print(_("You need to have root privileges to run the script."))
-    exit(_("Please try again, this time using 'sudo'. Exiting."))
-
 parser = ArgumentParser(prog="@PACKAGE@")
 parser.add_argument("--apply", "-a", action='store_true',
                     help=_("Fix hardcoded tray icons"))
@@ -82,10 +78,17 @@ parser.add_argument("--theme",
                     help=_("Use a different icon theme instead "
                            "of the default one."),
                     type=str, choices=THEMES_LIST)
+parser.add_argument("--user", "-u", action='store_true',
+                    help=_("Run without root: only fix apps with user-space icon paths (~/)."))
 parser.add_argument("--version", "-v", action='store_true',
                     help=_("Print the version number of Hardcode-Tray."))
 
 args = parser.parse_args()
+
+if geteuid() != 0 and not args.user:
+    print(_("You need to have root privileges to run the script."))
+    exit(_("Please try again using 'sudo', or use '--user' to fix only user-space apps."))
+
 App.set_args(args)
 
 if (not DESKTOP_ENV or DESKTOP_ENV == "other") and not App.icon_size():
